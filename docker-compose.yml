@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - NODE_ENV=production
+    networks:
+      - mynetwork  # Ensure backend is on the network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:3000"
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./frontend:/app
+    environment:
+      - NODE_ENV=production
+    networks:
+      - mynetwork  # Ensure frontend is on the network
+  
+  mongo:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./database/init-db.js:/docker-entrypoint-initdb.d/init-db.js # Mount init script
+      - mongo_data:/data/db
+    restart: always
+    networks:
+      - mynetwork  # Ensure mongo is on the network
+
+volumes:
+  mongo_data:
+
+networks:
+  mynetwork:  # Define the custom network
+    driver: bridge
